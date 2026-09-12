@@ -1,0 +1,60 @@
+======================================================================
+PERFORMANCE EVALUATION REPORT: MODEL F (Model F (Free Text + Metadata))
+Visual Backbone: ResNet50 + MHSA ViT | Text: Bio_ClinicalBERT | Metadata: Residual MetaBlock MLP
+Dataset: PAD-UFES-20 (Total N = 2298 | Train N = 1953 | Val N = 229 | Test Split N = 459)
+======================================================================
+
+OVERALL PERFORMANCE PARAMETERS:
+----------------------------------------------------------------------
+Accuracy                  :  87.36%
+Precision (Macro)         : 0.8422
+Precision (Weighted)      : 0.8992
+Recall (Macro)            : 0.9152
+Recall (Weighted)         : 0.8736
+F1-Score (Macro)          : 0.8683
+F1-Score (Weighted)       : 0.8789
+ROC-AUC (Macro OvR)       : 0.9922
+ROC-AUC (Weighted OvR)    : 0.9896
+True Positives (TP)       : 401
+True Negatives (TN)       : 2237
+False Positives (FP)      : 58
+False Negatives (FN)      : 58
+Dataset Size Used         : Total = 2298 (Train = 1953, Val = 229, Test = 459)
+
+AVERAGE DYNAMIC FUSION WEIGHTS: [0.42532870173454285, 0.5746710896492004]
+
+PER-CLASS CLASSIFICATION BREAKDOWN:
+----------------------------------------------------------------------
+              precision    recall  f1-score   support
+
+         BCC     0.9671    0.8698    0.9159       169
+         ACK     0.9597    0.8151    0.8815       146
+         NEV     0.9200    0.9388    0.9293        49
+         SEK     0.6364    0.8936    0.7434        47
+         SCC     0.6607    0.9737    0.7872        38
+         MEL     0.9091    1.0000    0.9524        10
+
+    accuracy                         0.8736       459
+   macro avg     0.8422    0.9152    0.8683       459
+weighted avg     0.8992    0.8736    0.8789       459
+
+
+PER-CLASS CONFUSION MATRIX PARAMETERS (TP, TN, FP, FN):
+----------------------------------------------------------------------
+Class    | TP     | TN     | FP     | FN    
+------------------------------------------
+BCC      | 147    | 285    | 5      | 22    
+ACK      | 119    | 308    | 5      | 27    
+NEV      | 46     | 406    | 4      | 3     
+SEK      | 42     | 388    | 24     | 5     
+SCC      | 37     | 402    | 19     | 1     
+MEL      | 10     | 448    | 1      | 0     
+
+CONFUSION MATRIX (Classes: ['BCC', 'ACK', 'NEV', 'SEK', 'SCC', 'MEL']):
+----------------------------------------------------------------------
+[[147,   3,   0,   0,  18,   1],
+ [  4, 119,   1,  21,   1,   0],
+ [  0,   0,  46,   3,   0,   0],
+ [  0,   2,   3,  42,   0,   0],
+ [  1,   0,   0,   0,  37,   0],
+ [  0,   0,   0,   0,   0,  10]]
