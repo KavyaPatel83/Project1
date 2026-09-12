@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # DERMA-GUARD: Multimodal Evidence-Based Skin Lesion Diagnostic System
 
 An advanced multimodal clinical diagnostic framework trained on the **PAD-UFES-20** dataset (2,298 patients, 6 skin lesion classes: `BCC`, `ACK`, `NEV`, `SEK`, `SCC`, `MEL`). The system implements **7 independent models** covering every modality permutation (**Models A through G**), powered by **Multi-Head Self-Attention Vision Transformer (ViT)** with **ResNet50** backbone, **Residual MetaBlock MLP** for clinical metadata, and **Bio_ClinicalBERT** for medical text narratives, unified through the **DERMA-GUARD Evidence Manager**, **Diagnosis-Adaptive Gated Fusion**, and **Split Conformal Prediction**.
@@ -178,6 +177,4 @@ python predict.py --image "D:\VIT BOOKS\PROJECT 1\Dataset\images\PAT_1516_1765_5
 ```bash
 python predict.py --text "55-year-old female presenting with a 6mm bleeding pigmented nodular lesion on the neck."
 ```
-=======
-# Project1
->>>>>>> c800e47cee2e6aa30a0f3a9d382b6734c05f8e61
+
