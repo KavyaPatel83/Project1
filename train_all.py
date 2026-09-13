@@ -56,7 +56,8 @@ from utils.plotting import (
     plot_global_comparison_barchart,
     plot_global_scorecard_table,
     plot_benchmark_summary_table_image,
-    plot_all_models_training_curves
+    plot_all_models_training_curves,
+    plot_all_models_confusion_matrices
 )
 from utils.terminal_display import (
     print_header,
@@ -979,6 +980,13 @@ def main():
     plot_all_models_training_curves(all_histories, all_curves_path_jpg)
     plot_all_models_training_curves(all_histories, all_curves_path_png)
     print(f"[*] Unified 7-model training curves image saved to: {all_curves_path_jpg} and {all_curves_path_png}", flush=True)
+
+    # 3. Unified single image for all models' confusion matrix heatmaps
+    all_cm_path_jpg = os.path.join(base_saved_dir, "all_models_confusion_matrices.jpg")
+    all_cm_path_png = os.path.join(base_saved_dir, "all_models_confusion_matrices.png")
+    plot_all_models_confusion_matrices(benchmark_results, all_cm_path_jpg)
+    plot_all_models_confusion_matrices(benchmark_results, all_cm_path_png)
+    print(f"[*] Unified 7-model confusion matrix heatmaps saved to: {all_cm_path_jpg} and {all_cm_path_png}", flush=True)
 
     barchart_path_jpg = os.path.join(base_saved_dir, "models_comparison_graph.jpg")
     barchart_path_png = os.path.join(base_saved_dir, "models_comparison_graph.png")

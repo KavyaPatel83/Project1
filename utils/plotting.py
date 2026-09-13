@@ -1,8 +1,10 @@
 import os
+import ast
 import numpy as np
 import matplotlib
 matplotlib.use('Agg')  # Headless backend for server/CLI environments
 import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.metrics import confusion_matrix, roc_curve, auc
 from sklearn.preprocessing import label_binarize
 
@@ -411,5 +413,106 @@ def plot_all_models_training_curves(all_histories: dict, save_path: str):
     fig.tight_layout(rect=[0, 0.03, 1, 0.97])
     plt.savefig(save_path, bbox_inches='tight', facecolor='white', dpi=200)
     plt.close()
+
+def plot_all_models_confusion_matrices(benchmark_results: list, save_path: str, classes: list = None):
+    """
+    Renders a unified, publication-quality 8-panel figure displaying confusion matrix heatmaps
+    for all 7 models (A through G) plus a cross-model per-class sensitivity/recall comparison heatmap.
+    """
+    os.makedirs(os.path.dirname(save_path), exist_ok=True)
+    if classes is None:
+        classes = ['BCC', 'ACK', 'NEV', 'SEK', 'SCC', 'MEL']
+
+    fig, axes = plt.subplots(4, 2, figsize=(18, 26), dpi=220)
+    fig.patch.set_facecolor('#ffffff')
+
+    fig.suptitle(
+        "DERMA-GUARD MULTI-MODEL BENCHMARK: CONFUSION MATRIX HEATMAPS\n"
+        "Comparative Diagnostic Accuracy & Error Profiles Across All 7 Architectures (PAD-UFES-20 Test Split N=459)",
+        fontsize=17, fontweight='bold', color='#0f172a', y=0.988
+    )
+
+    sensitivities = {}
+    model_labels = []
+
+    for idx, row in enumerate(benchmark_results):
+        r = idx // 2
+        c = idx % 2
+        ax = axes[r, c]
+
+        code = row.get('code', f'M{idx+1}')
+        name = row.get('name', f'Model {code}')
+        acc = float(row.get('accuracy_pct', row.get('accuracy', 0.0) * 100 if row.get('accuracy', 0.0) <= 1.0 else row.get('accuracy', 0.0)))
+        tp = int(row.get('tp', 0))
+        fp = int(row.get('fp', 0))
+        fn = int(row.get('fn', 0))
+
+        cm_raw = row.get('confusion_matrix', [])
+        if isinstance(cm_raw, str):
+            cm = np.array(ast.literal_eval(cm_raw))
+        else:
+            cm = np.array(cm_raw)
+
+        # Compute per-class recall / sensitivity
+        row_sums = cm.sum(axis=1, keepdims=True)
+        recalls = np.divide(np.diag(cm).astype(float), row_sums.ravel(), out=np.zeros_like(np.diag(cm), dtype=float), where=row_sums.ravel() != 0) * 100.0
+        sensitivities[code] = recalls
+        model_labels.append(f"Model {code} ({acc:.1f}%)")
+
+        # Plot individual model heatmap
+        sns.heatmap(
+            cm,
+            annot=True,
+            fmt='d',
+            cmap='Blues',
+            cbar=True,
+            ax=ax,
+            xticklabels=classes,
+            yticklabels=classes,
+            linewidths=1.2,
+            linecolor='#e2e8f0',
+            annot_kws={'fontsize': 11, 'fontweight': 'bold', 'color': '#0f172a'},
+            cbar_kws={'shrink': 0.85, 'label': 'Test Samples Count'}
+        )
+
+        ax.set_title(
+            f"[{code}] {name}\nAccuracy: {acc:.2f}% | TP: {tp} | FP: {fp} | FN: {fn}",
+            fontsize=12, fontweight='bold', color='#1e293b', pad=10
+        )
+        ax.set_xlabel("Predicted Diagnostic Category", fontsize=10, fontweight='bold', color='#334155')
+        ax.set_ylabel("True Diagnostic Category", fontsize=10, fontweight='bold', color='#334155')
+        ax.tick_params(axis='both', which='major', labelsize=10)
+
+    # 8th subplot: Cross-model per-class sensitivity / recall heatmap
+    ax_summary = axes[3, 1]
+    sens_matrix = np.array([sensitivities[row.get('code', f'M{i+1}')] for i, row in enumerate(benchmark_results)])
+
+    sns.heatmap(
+        sens_matrix,
+        annot=True,
+        fmt='.1f',
+        cmap='YlGnBu',
+        cbar=True,
+        ax=ax_summary,
+        xticklabels=classes,
+        yticklabels=model_labels,
+        linewidths=1.2,
+        linecolor='#e2e8f0',
+        annot_kws={'fontsize': 10.5, 'fontweight': 'bold'},
+        cbar_kws={'shrink': 0.85, 'label': 'Class Sensitivity / Recall (%)'}
+    )
+
+    ax_summary.set_title(
+        "Cross-Model Diagnostic Sensitivity Matrix (% Recall)\nDiagnostic Reliability by Lesion Type Across All 7 Models",
+        fontsize=12, fontweight='bold', color='#065f46', pad=10
+    )
+    ax_summary.set_xlabel("Diagnostic Lesion Category", fontsize=10, fontweight='bold', color='#334155')
+    ax_summary.set_ylabel("Classifier Architecture", fontsize=10, fontweight='bold', color='#334155')
+    ax_summary.tick_params(axis='both', which='major', labelsize=9.5)
+
+    plt.tight_layout(rect=[0, 0.02, 1, 0.975])
+    plt.savefig(save_path, bbox_inches='tight', facecolor='white', dpi=220)
+    plt.close()
+
 
 

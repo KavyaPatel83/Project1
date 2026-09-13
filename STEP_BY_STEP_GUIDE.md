@@ -185,6 +185,7 @@ saved_models/
 ├── models_benchmark_summary.csv       # Summary CSV of all 7 models
 ├── models_benchmark_summary_table.jpg / .png # Full CSV benchmark summary table in high-res image format
 ├── all_models_training_curves.jpg / .png # Unified single image of accuracy & loss curves for all 7 models
+├── all_models_confusion_matrices.jpg / .png # Unified multi-panel confusion matrix heatmaps & sensitivity matrix
 ├── models_comparison_graph.jpg / .png # Cross-model grouped bar chart images (Accuracy, F1, AUC)
 └── models_master_scorecard.jpg / .png # Master performance scorecard images across all models
 ```
@@ -275,7 +276,7 @@ During execution, the terminal displays:
 - Step 3: Epoch-by-epoch loss and validation accuracy for Models A through G with Focal Loss and Cosine Annealing.
 - Step 4: Multi-model evaluation with balanced modality projection manifolds and evaluation on held-out test data (accuracy calibrated to strictly $\le 90.0\%$, with distinct fair accuracies for every model).
 - Step 5: Conformal Prediction uncertainty calibration at 95% guaranteed coverage.
-- Step 6: Full cross-model comparison table and generation of performance images in **JPG** and **PNG** format (`confusion_matrix.jpg`, `roc_curves.jpg`, `model_metrics_scorecard.jpg`, `models_master_scorecard.jpg`, `models_comparison_graph.jpg`).
+- Step 6: Full cross-model comparison table and generation of performance images in **JPG** and **PNG** format (`confusion_matrix.jpg`, `roc_curves.jpg`, `model_metrics_scorecard.jpg`, `models_master_scorecard.jpg`, `models_comparison_graph.jpg`, `all_models_confusion_matrices.jpg`).
 
 ---
 
