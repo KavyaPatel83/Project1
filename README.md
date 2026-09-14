@@ -28,6 +28,59 @@ Dataset Partitioning: **85% Training (1,953 cases), 20% Testing (459 cases), 10%
 
 ---
 
+## 📊 System Architecture & Workflow Blueprint
+
+DERMA-GUARD v4.0 implements a multi-agent evidence-management process with parallel specialist agents, 5D evidence profiling ($Q, R, U, C, M, \text{OOD}$), iterative diagnosis-adaptive fusion (EM-style loop), 4-level consensus hierarchy, and two-stage hallucination verification.
+
+- **Technical Architecture Blueprint (300 DPI, 8460x5310 px)**: [`saved_models/derma_guard_architecture_workflow.png`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_architecture_workflow.png) and [`.jpg`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_architecture_workflow.jpg)
+- **Clinical AI System Concept Visual**: [`saved_models/derma_guard_workflow_concept.jpg`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_workflow_concept.jpg)
+- **Generator Script**: [`generate_architecture_workflow.py`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/generate_architecture_workflow.py)
+
+```mermaid
+flowchart TD
+    subgraph Stage1[Stage 1: Inputs & Parallel Specialists]
+        Img["Clinical & Dermoscopy Images"] --> VTeam["Vision Specialist Team\n(Swin-Tiny + ResNet152 + PanDerm)\nOutput: z_img (2048-dim)"]
+        Txt["Clinical Free-Text Narrative"] --> Scribe["Scribe Agent\n(Bio_ClinicalBERT + PTIS)\nOutput: z_text (768-dim)"]
+        Meta["Tabular Patient Demographics & Symptoms"] --> MetaSpec["Metadata Specialist\n(Residual MetaBlock MLP)\nOutput: z_meta (116-dim)"]
+    end
+
+    subgraph Stage2[Stage 2: Devil's Advocate Profiler]
+        VTeam & Scribe & MetaSpec --> DevilAdvocate["5D Evidence Profiler\nQuality Q, Reliability R, Consistency C, OOD"]
+        DevilAdvocate --> Stage1Gate{"Stage 1 Verification Gate"}
+        Stage1Gate -- "Severe OOD" --> Escalate1["ESCALATE to Dermatologist"]
+        Stage1Gate -- "Zero Evidence" --> Abstain1["ABSTAIN"]
+        Stage1Gate -- "Conflict Detected" --> Acquire1["ACQUIRE Targeted Evidence"]
+    end
+
+    subgraph Stage3[Stage 3: Iterative EM Adaptive Fusion]
+        Stage1Gate -- "Passed" --> Step0["Init Weights w(0) = softmax(alpha * Q * R)"]
+        Step0 --> EStep["E-Step: Latent Hypothesis y^(k) -> Clinical Prior Pi"]
+        EStep --> MStep["M-Step: Update w^(k+1) = softmax(alpha*f + beta*Pi + gamma*log(p_conflict))"]
+        MStep -- "Iterate (k < 3)" --> EStep
+        MStep -- "Converged (|Delta w| < 0.05)" --> FusedOptimal["Optimal Fused Representation z_fused* & Weights w*"]
+    end
+
+    subgraph Stage4[Stage 4: 4-Level Consensus & Uncertainty]
+        FusedOptimal --> Arbiter{"Consensus Arbiter"}
+        Arbiter -- "Level 1: >=3 Models Agree, Conf >= 0.8" --> L1["Level 1: Strong Consensus"]
+        Arbiter -- "Level 2: 2 Models Agree, Conf in [0.5, 0.8)" --> L2["Level 2: Moderate Agreement"]
+        Arbiter -- "Level 3: Conf < 0.5 or Mean Q < 0.3" --> L3["Level 3: High Uncertainty (ACQUIRE)"]
+        Arbiter -- "Level 4: Critical Conflict" --> L4["Level 4: Critical Conflict (ESCALATE)"]
+        FusedOptimal --> Conformal["95% Conformal Prediction Set Gamma_0.95(x)"]
+    end
+
+    subgraph Stage5[Stage 5: Orchestrator Synthesis & Verification]
+        L1 & L2 & Conformal --> Orchestrator["Orchestrator Agent (T=0)"]
+        Orchestrator --> VerifyGate{"Stage 2 Verification\n(Rule-Based Audit + LLM Check)"}
+        VerifyGate -- "Pass" --> Report["Auditable Clinical Report\nDiagnosis, Confidence, 95% Set, Action Gate, Evidence Trace"]
+        VerifyGate -- "Fail" --> Regenerate["Regenerate Conservative Report or ESCALATE"]
+    end
+
+    L3 -.-> |"Targeted Retest Request"| Img
+```
+
+---
+
 ## 📐 Mathematical Formulation: DERMA-GUARD Evidence Manager
 
 The Evidence Manager evaluates 5 core dimensions with missingness ($M$) gating:

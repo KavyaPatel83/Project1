@@ -53,6 +53,58 @@ The DERMA-GUARD system dynamically handles all 7 possible input modality combina
 
 ---
 
+## 1.1 System Architecture Workflow & Visual Diagrams
+
+DERMA-GUARD v4.0 implements a multi-agent evidence-management process with strict safety verification. Complete visual architecture workflows are available in the repository:
+- **Technical Architecture Blueprint (300 DPI, 8460x5310 px)**: [`saved_models/derma_guard_architecture_workflow.png`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_architecture_workflow.png) and [`.jpg`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_architecture_workflow.jpg)
+- **Clinical AI System Concept**: [`saved_models/derma_guard_workflow_concept.jpg`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/saved_models/derma_guard_workflow_concept.jpg)
+- **Generator Script**: [`generate_architecture_workflow.py`](file:///d:/VIT%20BOOKS/PROJECT%201/Project/generate_architecture_workflow.py)
+
+```mermaid
+flowchart TD
+    subgraph Stage1[Stage 1: Multimodal Ingestion & Specialist Agents]
+        InImg["Cutaneous Clinical & Dermoscopy Image"] --> VisionTeam["Vision Specialist Team\n(Swin-Tiny + ResNet152 + PanDerm/DermLIP)\nOutput: z_img (2048-dim)"]
+        InText["Patient Clinical Free-Text Narrative"] --> ScribeAgent["Scribe Agent\n(Bio_ClinicalBERT + PTIS Quality Score)\nOutput: z_text (768-dim)"]
+        InMeta["Tabular Patient Demographics & Lesion Metadata"] --> MetaSpecialist["Metadata Specialist Agent\n(Residual MetaBlock MLP)\nOutput: z_meta (116-dim)"]
+    end
+
+    subgraph Stage2[Stage 2: Devil's Advocate & 5D Evidence Profiler]
+        VisionTeam & ScribeAgent & MetaSpecialist --> EvidenceProfiler["5D Evidence Profiler\nQuality Q, Reliability R, Consistency C, Missingness M, OOD"]
+        EvidenceProfiler --> Stage1Gate{"Stage 1 Verification Gate"}
+        Stage1Gate -- "OOD Anomaly" --> Escalate1["ESCALATE\n(Human Dermatologist Panel)"]
+        Stage1Gate -- "Zero Modalities" --> Abstain1["ABSTAIN\n(Insufficient Evidence)"]
+        Stage1Gate -- "Severe Conflict" --> Acquire1["ACQUIRE\n(Targeted Evidence Request)"]
+    end
+
+    subgraph Stage3[Stage 3: Iterative EM Diagnosis-Adaptive Fusion]
+        Stage1Gate -- "Passes Gate" --> InitWeight["Step 0: Init Weights w(0) = softmax(alpha * Q * R)"]
+        InitWeight --> EStep["E-Step: Fused Rep z_fused -> Working Diagnosis y^(k) -> Clinical Prior Pi"]
+        EStep --> MStep["M-Step: Weight Update w^(k+1) = softmax(alpha*f + beta*Pi + gamma*log(p_conflict))"]
+        MStep -- "max |Delta w| >= 0.05 (k < 3)" --> EStep
+        MStep -- "Converged (k=3 or |Delta w| < 0.05)" --> OptimalFused["Optimal Fused Representation z_fused* & Weights w*"]
+    end
+
+    subgraph Stage4[Stage 4: 4-Level Consensus Hierarchy & Conformal Uncertainty]
+        OptimalFused --> ConsensusArbiter{"Consensus Hierarchy Arbiter"}
+        ConsensusArbiter -- "Level 1: >=3 Models Agree, Conf >= 0.8" --> L1["Level 1: Strong Consensus (Auto-Approve)"]
+        ConsensusArbiter -- "Level 2: 2 Models Agree, Conf in [0.5, 0.8)" --> L2["Level 2: Moderate Agreement (Weighted Arbitration)"]
+        ConsensusArbiter -- "Level 3: Conf < 0.5 or Mean Q < 0.3" --> L3["Level 3: High Uncertainty -> ACQUIRE Target"]
+        ConsensusArbiter -- "Level 4: Critical Conflict / Outlier" --> L4["Level 4: Critical Conflict -> ESCALATE"]
+        OptimalFused --> ConformalEngine["Conformal Prediction Calibration\nCoverage Guarantee >= 95% -> Prediction Set Gamma_0.95(x)"]
+    end
+
+    subgraph Stage5[Stage 5: Orchestrator Synthesis & Verification]
+        L1 & L2 & ConformalEngine --> Orchestrator["Orchestrator Synthesis Agent (T=0)"]
+        Orchestrator --> Stage2Gate{"Stage 2 Verification Layer\n(Rule-Based Audit + LLM Consistency Check)"}
+        Stage2Gate -- "Audit Passed" --> FinalReport["Final Auditable Clinical Report\nDiagnosis y_hat, Confidence, 95% Set, Action Gate, Evidence Trace"]
+        Stage2Gate -- "Audit Failed" --> Escalate2["Regenerate Conservative Report or ESCALATE"]
+    end
+
+    L3 -.-> |"Targeted Retest Request"| InImg
+```
+
+---
+
 ## 2. The Five Core Evidence Dimensions & Mathematical Formulations
 
 In **DERMA-GUARD**, the **Evidence Score** does not simply mean "model confidence." It measures **how trustworthy, useful, consistent, and sufficient the available evidence is for the current case**:
