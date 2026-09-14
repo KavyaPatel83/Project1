@@ -337,7 +337,7 @@ class DermaGuardPredictor:
 
         return probs, weights
 
-    def predict(self, image_path_or_pil=None, metadata_dict=None, text_string=None, auto_generate_text=False, verbose=True):
+    def predict(self, image_path_or_pil=None, metadata_dict=None, text_string=None, auto_generate_text=False, target_model=None, verbose=True):
         """
         Executes DERMA-GUARD Evidence-Based Multimodal Clinical Inference:
         Shows all step-by-step operations:
@@ -387,9 +387,13 @@ class DermaGuardPredictor:
             raise ValueError("INSUFFICIENT_EVIDENCE: At least one modality (image, metadata, or text) must be provided.")
 
         key = tuple(sorted(active_modalities))
-        primary_model_code = MODALITY_MODEL_MAP[key]
+        if target_model is not None:
+            primary_model_code = target_model.strip().upper()
+        else:
+            primary_model_code = MODALITY_MODEL_MAP.get(key, 'G')
+
         if verbose:
-            print(f"   [*] Primary Execution Target: Model {primary_model_code} ({MODELS_CONFIG[primary_model_code]['name']})")
+            print(f"   [*] Primary Execution Target: Model {primary_model_code} ({MODELS_CONFIG.get(primary_model_code, {}).get('name', f'Model {primary_model_code}')})")
 
         # ----------------------------------------------------------------------
         # [STEP 2] Multimodal Representation Encoding
@@ -726,6 +730,7 @@ def run_sample_inference():
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description="DERMA-GUARD Clinical Inference Engine (ResNet50 + Bio_ClinicalBERT + Residual MetaBlock MLP)")
+    parser.add_argument("--model", "-m", type=str, default=None, help="Target model architecture code (A through G, e.g., --model G)")
     parser.add_argument("--image", type=str, default=None, help="Path to lesion image file")
     parser.add_argument("--metadata", type=str, default=None, help="JSON string or file path containing patient metadata dictionary")
     parser.add_argument("--text", type=str, default=None, help="Clinical free text description")
@@ -749,7 +754,8 @@ if __name__ == '__main__':
                 image_path_or_pil=args.image,
                 metadata_dict=meta_dict,
                 text_string=args.text,
-                auto_generate_text=args.auto_text
+                auto_generate_text=args.auto_text,
+                target_model=args.model
             )
             print_prediction_report(res)
 

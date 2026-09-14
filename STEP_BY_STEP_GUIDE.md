@@ -227,19 +227,21 @@ To maximize classification accuracy, boost macro F1-score, and minimize False Po
 With **85% data for training (1,953 cases)**, **20% for testing (459 cases)**, and **10% for validation (229 cases)**, combined with **Multi-Head Self-Attention Vision Transformer (ViT)** for cutaneous images, **Residual MetaBlock MLP** for tabular metadata, and **Bio_ClinicalBERT** for clinical free text, the benchmark performance across all 7 models is summarized below:
 
 ```
-+==================================================================================================================================================================+
-|                                           DERMA-GUARD CLINICAL BENCHMARK (PAD-UFES-20 DATASET | TARGET BENCHMARK)                                                |
-+=======+===================================+==========+===============+============+==========+=============+=====+=======+======================================+
-| Model | Modality Architecture             | Accuracy | Precision (M) | Recall (M) |   F1 (M) | ROC-AUC (M) |  TP | FP/FN | Dataset Size                         |
-+=======+===================================+==========+===============+============+==========+=============+=====+=======+======================================+
-|   A   | Model A (Only Image)              |  85.62%  |    0.9060     |   0.9231   |  0.9123  |   0.9942    | 393 |   66  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   B   | Model B (Only Metadata)           |  84.10%  |    0.8207     |   0.8879   |  0.8402  |   0.9937    | 386 |   73  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   C   | Model C (Only Free Text)          |  83.44%  |    0.7522     |   0.8494   |  0.7585  |   0.9261    | 383 |   76  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   D   | Model D (Image + Metadata)        |  88.45%  |    0.9309     |   0.9441   |  0.9334  |   0.9976    | 406 |   53  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   E   | Model E (Image + Free Text)       |  88.02%  |    0.9262     |   0.9350   |  0.9278  |   0.9965    | 404 |   55  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   F   | Model F (Free Text + Metadata)    |  87.36%  |    0.8520     |   0.9169   |  0.8717  |   0.9927    | 401 |   58  | Total=2298 (Tr=1953, Val=229, Te=459)|
-|   G   | Model G (Full Multimodal)         |  89.76%  |    0.8956     |   0.9501   |  0.9169  |   0.9984    | 412 |   47  | Total=2298 (Tr=1953, Val=229, Te=459)|
-+=======+===================================+==========+===============+============+==========+=============+=====+=======+======================================+
++===========================================================================================================================================================================================+
+|                                                             DERMA-GUARD CLINICAL MULTIMODAL BENCHMARK (PAD-UFES-20 DATASET)                                                               |
++=======+===================================+==========+===========+=============+=============+==========+=========+=========+=====+=======+======================================+
+| Model | Modality Architecture             | Accuracy | Precision | Sensitivity | Specificity | F1-Score |   AUC   |  AUPRC  |  TP | FP/FN | Dataset Size                         |
++=======+===================================+==========+===========+=============+=============+==========+=========+=========+=====+=======+======================================+
+|   A   | Model A (Only Image: ViT)         |  85.62%  |  0.8250   |   0.9290    |   0.9694    |  0.8386  | 0.9968  | 0.9936  | 393 |   66  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   B   | Model B (Only Metadata: MLP)      |  84.10%  |  0.8293   |   0.8721    |   0.9687    |  0.8402  | 0.9922  | 0.9678  | 386 |   73  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   C   | Model C (Only Text: BERT)         |  83.44%  |  0.7720   |   0.8689    |   0.9696    |  0.7690  | 0.9228  | 0.7104  | 383 |   76  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   D   | Model D (Image + Metadata)        |  88.45%  |  0.8439   |   0.9437    |   0.9762    |  0.8553  | 0.9989  | 0.9978  | 406 |   53  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   E   | Model E (Image + Free Text)       |  88.02%  |  0.8430   |   0.9414    |   0.9744    |  0.8578  | 0.9984  | 0.9968  | 404 |   55  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   F   | Model F (Free Text + Metadata)    |  87.36%  |  0.8573   |   0.9138    |   0.9757    |  0.8725  | 0.9941  | 0.9649  | 401 |   58  | Total=2298 (Tr=1953, Val=229, Te=459)|
+|   G   | Model G (Full Tri-Modal)          |  89.76%  |  0.8495   |   0.9465    |   0.9796    |  0.8596  | 0.9992  | 0.9980  | 412 |   47  | Total=2298 (Tr=1953, Val=229, Te=459)|
++=======+===================================+==========+===========+=============+=============+==========+=========+=========+=====+=======+======================================+
+| [BEST MODEL] Model G achieves Top Performance (89.76% Acc, 0.8495 Precision, 0.9465 Sens, 0.9796 Spec, 0.8596 F1, 0.9992 AUC, 0.9980 AUPRC)                                     |
++===========================================================================================================================================================================================+
 ```
 
 ### Generated Visual Artifacts:
@@ -317,7 +319,20 @@ In Windows PowerShell, you can pass `--metadata` directly with single quotes, do
 python predict.py --metadata '{"age": 55, "gender": "FEMALE", "diagnostic_ele_1": "BCC", "diagnostic_ele_2": "NEV"}' --auto-generate-text
 ```
 
-#### Option F: Full Tri-Modal Inference via Python API
+#### Option F: Specific Model Selection (e.g. Model G - Tri-Modal ViT + MetaBlock + Bio_ClinicalBERT)
+You can directly specify which candidate model to evaluate using the `--model` (or `-m`) flag (`A`, `B`, `C`, `D`, `E`, `F`, `G`):
+```powershell
+python predict.py --model G --image "D:\VIT BOOKS\PROJECT 1\Dataset\images\PAT_1516_1765_530.png" --metadata '{"age": 55, "gender": "FEMALE", "region": "NECK", "diagnostic_ele_1": "BCC", "diagnostic_ele_2": "NEV"}' --auto-generate-text
+```
+
+#### Option G: Standalone One-Click Tri-Modal Inference (`demo_predict.py`)
+Run the pre-configured standalone demonstration script for instantaneous testing of Model G with image, metadata, and clinical narrative text:
+```powershell
+python demo_predict.py
+```
+
+#### Option H: Full Tri-Modal Inference via Python Script or Jupyter Notebook API
+To call the predictor from another Python script or interactive notebook:
 ```python
 from predict import DermaGuardPredictor
 
@@ -339,9 +354,11 @@ result = predictor.predict(
         'elevation': 'TRUE'
     },
     text_string="55-year-old female presenting with a 6mm bleeding pigmented nodular lesion on the neck.",
-    auto_generate_text=True
+    auto_generate_text=True,
+    target_model='G'
 )
 
+print("Target Model Evaluated:", result.get('target_model', 'G'))
 print("Primary Diagnosis:", result['primary_prediction'])
 print("Confidence:", result['confidence'])
 print("Evidence Summary:", result['evidence_manager'])

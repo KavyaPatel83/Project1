@@ -115,32 +115,45 @@ def plot_model_metrics_scorecard(metrics: dict, model_code: str, model_name: str
     Renders an image scorecard displaying all performance scores for a single model.
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    fig, ax = plt.subplots(figsize=(9, 5), dpi=160)
+    fig, ax = plt.subplots(figsize=(9.5, 6.2), dpi=160)
     ax.axis('off')
 
     title = f"PERFORMANCE SCORECARD: MODEL {model_code}\n{model_name}"
-    ax.text(0.5, 0.92, title, ha='center', va='top', fontsize=13, fontweight='bold', color='#0b2e59')
+    ax.text(0.5, 0.94, title, ha='center', va='top', fontsize=13, fontweight='bold', color='#0b2e59')
+
+    sens_m = metrics.get('sensitivity_macro', metrics.get('recall_macro', 0.0))
+    sens_w = metrics.get('sensitivity_weighted', metrics.get('recall_weighted', 0.0))
+    spec_m = metrics.get('specificity_macro', 0.0)
+    spec_w = metrics.get('specificity_weighted', 0.0)
+    auc_m = metrics.get('auc_macro', metrics.get('roc_auc_macro', 0.0))
+    auc_w = metrics.get('auc_weighted', metrics.get('roc_auc_weighted', 0.0))
+    auprc_m = metrics.get('auprc_macro', 0.0)
+    auprc_w = metrics.get('auprc_weighted', 0.0)
 
     table_data = [
         ["Metric Parameter", "Score Value", "Clinical Benchmark Level"],
         ["Accuracy", f"{metrics.get('accuracy_pct', 0.0):.2f}%", "High Multimodal Concordance"],
-        ["Precision (Macro)", f"{metrics.get('precision_macro', 0.0):.4f}", "Balanced Cross-Class Reliability"],
+        ["Sensitivity / Recall (Macro)", f"{sens_m:.4f}", "Malignancy Screening Safety"],
+        ["Sensitivity / Recall (Weighted)", f"{sens_w:.4f}", "General Lesion Sensitivity"],
+        ["Specificity (Macro TNR)", f"{spec_m:.4f}", "Benign Identification Specificity"],
+        ["Specificity (Weighted TNR)", f"{spec_w:.4f}", "Prevalence-Adjusted TNR"],
+        ["AUC (ROC-AUC Macro OvR)", f"{auc_m:.4f}", "Multi-class Discriminative Power"],
+        ["AUC (ROC-AUC Weighted OvR)", f"{auc_w:.4f}", "Population-Adjusted Discrimination"],
+        ["AUPRC (Precision-Recall AUC Macro)", f"{auprc_m:.4f}", "Imbalanced PR Discrimination"],
+        ["AUPRC (PR-AUC Weighted)", f"{auprc_w:.4f}", "Weighted PR Performance"],
+        ["Precision (Macro)", f"{metrics.get('precision_macro', 0.0):.4f}", "Balanced Cross-Class Precision"],
         ["Precision (Weighted)", f"{metrics.get('precision_weighted', 0.0):.4f}", "Prevalence-Weighted Precision"],
-        ["Recall / Sensitivity (Macro)", f"{metrics.get('recall_macro', 0.0):.4f}", "Malignancy Screening Safety"],
-        ["Recall / Sensitivity (Weighted)", f"{metrics.get('recall_weighted', 0.0):.4f}", "General Sensitivity"],
         ["F1-Score (Macro)", f"{metrics.get('f1_macro', 0.0):.4f}", "Harmonic Mean (Balanced)"],
         ["F1-Score (Weighted)", f"{metrics.get('f1_weighted', 0.0):.4f}", "Harmonic Mean (Weighted)"],
-        ["ROC-AUC (Macro OvR)", f"{metrics.get('roc_auc_macro', 0.0):.4f}", "Multi-class Discriminative Power"],
-        ["ROC-AUC (Weighted OvR)", f"{metrics.get('roc_auc_weighted', 0.0):.4f}", "Population-Adjusted Discrimination"],
         ["True Positives (TP)", f"{metrics.get('tp', '-')}", "Correct Positive Diagnoses"],
         ["False Positives / Negatives (FP/FN)", f"{metrics.get('fp', '-')}", "Diagnostic Error Bound"],
         ["Dataset Size Used", "Total=2298 (Test=459)", "Stratified Test Partition (20%)"]
     ]
 
-    table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.38, 0.22, 0.40])
+    table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.42, 0.20, 0.38])
     table.auto_set_font_size(False)
-    table.set_fontsize(9.0)
-    table.scale(1.0, 1.35)
+    table.set_fontsize(8.5)
+    table.scale(1.0, 1.25)
 
     # Style header and rows
     for (row, col), cell in table.get_celld().items():
@@ -161,29 +174,31 @@ def plot_model_metrics_scorecard(metrics: dict, model_code: str, model_name: str
 
 def plot_global_comparison_barchart(results_list: list, save_path: str):
     """
-    Grouped bar chart comparing Accuracy, Macro F1, and Macro ROC-AUC across all 7 models.
+    Grouped bar chart comparing Accuracy, Precision, Macro F1, and Macro AUC across all 7 models.
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
     codes = [r['code'] for r in results_list]
     accuracies = [r['accuracy_pct'] for r in results_list]
+    precisions = [r['precision_macro'] * 100 for r in results_list]
     f1_macros = [r['f1_macro'] * 100 for r in results_list]
-    roc_aucs = [r['roc_auc_macro'] * 100 for r in results_list]
+    roc_aucs = [r.get('auc_macro', r.get('roc_auc_macro', 0.0)) * 100 for r in results_list]
 
     x = np.arange(len(codes))
-    width = 0.25
+    width = 0.20
 
-    fig, ax = plt.subplots(figsize=(12, 6), dpi=160)
-    rects1 = ax.bar(x - width, accuracies, width, label='Accuracy (%)', color='#2b5c8f', edgecolor='black', alpha=0.9)
-    rects2 = ax.bar(x, f1_macros, width, label='Macro F1 (%)', color='#2ca02c', edgecolor='black', alpha=0.9)
-    rects3 = ax.bar(x + width, roc_aucs, width, label='Macro ROC-AUC (%)', color='#ff7f0e', edgecolor='black', alpha=0.9)
+    fig, ax = plt.subplots(figsize=(13, 6.5), dpi=160)
+    rects1 = ax.bar(x - 1.5 * width, accuracies, width, label='Accuracy (%)', color='#2b5c8f', edgecolor='black', alpha=0.9)
+    rects2 = ax.bar(x - 0.5 * width, precisions, width, label='Precision (%)', color='#8b5cf6', edgecolor='black', alpha=0.9)
+    rects3 = ax.bar(x + 0.5 * width, f1_macros, width, label='F1-Score (%)', color='#10b981', edgecolor='black', alpha=0.9)
+    rects4 = ax.bar(x + 1.5 * width, roc_aucs, width, label='Macro AUC (%)', color='#f59e0b', edgecolor='black', alpha=0.9)
 
     ax.set_ylabel('Score (%)', fontsize=12, fontweight='bold')
-    ax.set_title('Comprehensive Performance Comparison across Models A through G\nPAD-UFES-20 Dataset (ViT, ClinicalBERT, MetaBlock MLP, Adaptive Fusion)',
+    ax.set_title('Comprehensive Performance Comparison across Models A through G\nPAD-UFES-20 Dataset (Accuracy, Precision, F1-Score, AUC)',
                  fontsize=13, fontweight='bold', pad=14)
     ax.set_xticks(x)
     ax.set_xticklabels([f"Model {c}\n({r['modality'].split()[0]})" for c, r in zip(codes, results_list)], fontsize=10)
-    ax.legend(loc='upper left', frameon=True, fontsize=11)
-    ax.set_ylim([0, 105])
+    ax.legend(loc='upper left', frameon=True, fontsize=10.5)
+    ax.set_ylim([0, 108])
     ax.grid(axis='y', linestyle='--', alpha=0.5)
 
     for rect in rects1:
@@ -191,7 +206,7 @@ def plot_global_comparison_barchart(results_list: list, save_path: str):
         ax.annotate(f'{height:.1f}%',
                     xy=(rect.get_x() + rect.get_width() / 2, height),
                     xytext=(0, 3), textcoords="offset points",
-                    ha='center', va='bottom', fontsize=8.5, fontweight='bold')
+                    ha='center', va='bottom', fontsize=8.0, fontweight='bold')
 
     fig.tight_layout()
     plt.savefig(save_path, bbox_inches='tight', facecolor='white', dpi=160)
@@ -202,30 +217,38 @@ def plot_global_scorecard_table(results_list: list, save_path: str):
     Renders a master scorecard table image summarizing all metrics across all 7 models.
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    fig, ax = plt.subplots(figsize=(15, 6), dpi=180)
+    fig, ax = plt.subplots(figsize=(18, 6.5), dpi=180)
     ax.axis('off')
 
     title = "DERMA-GUARD MASTER PERFORMANCE SCORECARD: MODELS A THROUGH G"
     ax.text(0.5, 0.94, title, ha='center', va='top', fontsize=14, fontweight='bold', color='#0b2e59')
 
     table_data = [
-        ["Code", "Modality Paradigm", "Accuracy", "Precision", "Recall", "F1", "ROC-AUC", "TP", "FP/FN", "Dataset Partition"]
+        ["Code", "Modality Paradigm", "Accuracy", "Precision", "Sensitivity", "Specificity", "F1-Score", "AUC", "AUPRC", "TP", "FP/FN", "Dataset Split"]
     ]
     for r in results_list:
+        prec = f"{r.get('precision_macro', 0.0):.4f}"
+        sens = f"{r.get('sensitivity_macro', r.get('recall_macro', 0.0)):.4f}"
+        spec = f"{r.get('specificity_macro', 0.0):.4f}"
+        f1 = f"{r.get('f1_macro', 0.0):.4f}"
+        auc = f"{r.get('auc_macro', r.get('roc_auc_macro', 0.0)):.4f}"
+        auprc = f"{r.get('auprc_macro', 0.0):.4f}"
         table_data.append([
             f"Model {r['code']}",
             r['modality'],
             f"{r['accuracy_pct']:.2f}%",
-            f"{r['precision_macro']:.4f}",
-            f"{r['recall_macro']:.4f}",
-            f"{r['f1_macro']:.4f}",
-            f"{r['roc_auc_macro']:.4f}",
+            prec,
+            sens,
+            spec,
+            f1,
+            auc,
+            auprc,
             f"{r.get('tp', '-')}",
             f"{r.get('fp', '-')}",
             "N=2298 (1953/229/459)"
         ])
 
-    table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.08, 0.28, 0.09, 0.09, 0.09, 0.09, 0.09, 0.06, 0.06, 0.16])
+    table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=[0.06, 0.21, 0.07, 0.08, 0.08, 0.08, 0.08, 0.07, 0.07, 0.04, 0.05, 0.11])
     table.auto_set_font_size(False)
     table.set_fontsize(9.0)
     table.scale(1.0, 1.5)
@@ -239,7 +262,7 @@ def plot_global_scorecard_table(results_list: list, save_path: str):
                 cell.set_facecolor('#f0f5fa')
             else:
                 cell.set_facecolor('#ffffff')
-            if col in [2, 5, 6]:
+            if col in [2, 3, 4, 5, 6, 7]:
                 cell.set_text_props(fontweight='bold')
             if row == len(results_list): # Model G row
                 cell.set_facecolor('#e3f2fd')
@@ -255,31 +278,39 @@ def plot_benchmark_summary_table_image(benchmark_results: list, save_path: str):
     and dataset sizes.
     """
     os.makedirs(os.path.dirname(save_path), exist_ok=True)
-    fig, ax = plt.subplots(figsize=(20, 8.5), dpi=220)
+    fig, ax = plt.subplots(figsize=(23, 9.2), dpi=220)
     ax.axis('off')
 
-    title = "DERMA-GUARD MULTIMODAL COMPREHENSIVE BENCHMARK SCORECARD (ALL MODELS >= 90% ACCURACY)"
+    title = "DERMA-GUARD MULTIMODAL COMPREHENSIVE BENCHMARK SCORECARD"
     subtitle = "Dataset: PAD-UFES-20 (Total N = 2,298 | Train N = 1,953 [85%] | Val N = 229 [10%] | Test N = 459 [20%])"
     ax.text(0.5, 0.96, title, ha='center', va='top', fontsize=15, fontweight='bold', color='#0b2e59')
     ax.text(0.5, 0.92, subtitle, ha='center', va='top', fontsize=11.5, fontstyle='italic', color='#334155')
 
     headers = [
         "Code", "Model Name", "Modality Paradigm",
-        "Accuracy", "Precision (M)", "Recall (M)", "F1 (M)", "ROC-AUC (M)",
+        "Accuracy", "Precision (M)", "Sensitivity (M)", "Specificity (M)", "F1-Score (M)", "AUC (M)", "AUPRC (M)",
         "TP", "TN", "FP", "FN", "Dataset Split (Train/Val/Test)"
     ]
     table_data = [headers]
 
     for r in benchmark_results:
+        prec = f"{r.get('precision_macro', 0.0):.4f}"
+        sens = f"{r.get('sensitivity_macro', r.get('recall_macro', 0.0)):.4f}"
+        spec = f"{r.get('specificity_macro', 0.0):.4f}"
+        f1 = f"{r.get('f1_macro', 0.0):.4f}"
+        auc = f"{r.get('auc_macro', r.get('roc_auc_macro', 0.0)):.4f}"
+        auprc = f"{r.get('auprc_macro', 0.0):.4f}"
         table_data.append([
             f"Model {r['code']}",
             r['name'],
             r['modality'],
             f"{r['accuracy_pct']:.2f}%",
-            f"{r['precision_macro']:.4f}",
-            f"{r['recall_macro']:.4f}",
-            f"{r['f1_macro']:.4f}",
-            f"{r['roc_auc_macro']:.4f}",
+            prec,
+            sens,
+            spec,
+            f1,
+            auc,
+            auprc,
             str(r.get('tp', '-')),
             str(r.get('tn', '-')),
             str(r.get('fp', '-')),
@@ -287,7 +318,7 @@ def plot_benchmark_summary_table_image(benchmark_results: list, save_path: str):
             f"Total=2298 (1953/229/{r.get('dataset_test', 459)})"
         ])
 
-    col_widths = [0.06, 0.16, 0.22, 0.07, 0.07, 0.07, 0.07, 0.07, 0.04, 0.05, 0.04, 0.04, 0.15]
+    col_widths = [0.05, 0.14, 0.17, 0.065, 0.065, 0.065, 0.065, 0.065, 0.06, 0.06, 0.035, 0.045, 0.035, 0.035, 0.10]
     table = ax.table(cellText=table_data, loc='center', cellLoc='center', colWidths=col_widths)
     table.auto_set_font_size(False)
     table.set_fontsize(9.5)
@@ -306,15 +337,15 @@ def plot_benchmark_summary_table_image(benchmark_results: list, save_path: str):
             # Highlight text model (Model C)
             if row == 3: # Model C
                 cell.set_facecolor('#fef3c7')
-                if col in [0, 1, 3, 6]:
+                if col in [0, 1, 3, 4, 5, 6, 7, 8, 9]:
                     cell.set_text_props(fontweight='bold', color='#92400e')
             # Highlight tri-modal model (Model G)
             elif row == len(benchmark_results): # Model G
                 cell.set_facecolor('#e0f2fe')
-                if col in [0, 1, 3, 6, 7]:
+                if col in [0, 1, 3, 4, 5, 6, 7, 8, 9]:
                     cell.set_text_props(fontweight='bold', color='#0369a1')
             else:
-                if col in [3, 6, 7]:
+                if col in [3, 4, 5, 6, 7, 8, 9]:
                     cell.set_text_props(fontweight='bold', color='#0f172a')
 
     fig.tight_layout()

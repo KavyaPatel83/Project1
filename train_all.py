@@ -538,14 +538,18 @@ def evaluate_and_report_model(model_code, model_name, model, test_loader, device
         f.write(f"OVERALL PERFORMANCE PARAMETERS:\n")
         f.write(f"----------------------------------------------------------------------\n")
         f.write(f"Accuracy                  : {metrics['accuracy_pct']:6.2f}%\n")
+        f.write(f"Sensitivity / Recall (M)  : {metrics.get('sensitivity_macro', metrics['recall_macro']):.4f}\n")
+        f.write(f"Sensitivity / Recall (W)  : {metrics.get('sensitivity_weighted', metrics['recall_weighted']):.4f}\n")
+        f.write(f"Specificity (Macro TNR)   : {metrics.get('specificity_macro', 0.0):.4f}\n")
+        f.write(f"Specificity (Weighted TNR): {metrics.get('specificity_weighted', 0.0):.4f}\n")
+        f.write(f"ROC-AUC / AUC (Macro OvR) : {metrics.get('auc_macro', metrics['roc_auc_macro']):.4f}\n")
+        f.write(f"ROC-AUC / AUC (Weighted)  : {metrics.get('auc_weighted', metrics['roc_auc_weighted']):.4f}\n")
+        f.write(f"AUPRC (Macro PR-AUC)      : {metrics.get('auprc_macro', 0.0):.4f}\n")
+        f.write(f"AUPRC (Weighted PR-AUC)   : {metrics.get('auprc_weighted', 0.0):.4f}\n")
         f.write(f"Precision (Macro)         : {metrics['precision_macro']:.4f}\n")
         f.write(f"Precision (Weighted)      : {metrics['precision_weighted']:.4f}\n")
-        f.write(f"Recall (Macro)            : {metrics['recall_macro']:.4f}\n")
-        f.write(f"Recall (Weighted)         : {metrics['recall_weighted']:.4f}\n")
         f.write(f"F1-Score (Macro)          : {metrics['f1_macro']:.4f}\n")
         f.write(f"F1-Score (Weighted)       : {metrics['f1_weighted']:.4f}\n")
-        f.write(f"ROC-AUC (Macro OvR)       : {metrics['roc_auc_macro']:.4f}\n")
-        f.write(f"ROC-AUC (Weighted OvR)    : {metrics['roc_auc_weighted']:.4f}\n")
         f.write(f"True Positives (TP)       : {metrics.get('tp', int(np.sum(np.diag(cm))))}\n")
         f.write(f"True Negatives (TN)       : {metrics.get('tn', 0)}\n")
         f.write(f"False Positives (FP)      : {metrics.get('fp', 0)}\n")
@@ -556,13 +560,13 @@ def evaluate_and_report_model(model_code, model_name, model, test_loader, device
         f.write(f"PER-CLASS CLASSIFICATION BREAKDOWN:\n")
         f.write(f"----------------------------------------------------------------------\n")
         f.write(clf_rep_str + "\n\n")
-        f.write(f"PER-CLASS CONFUSION MATRIX PARAMETERS (TP, TN, FP, FN):\n")
+        f.write(f"PER-CLASS CONFUSION MATRIX PARAMETERS (TP, TN, FP, FN, Sens, Spec, AUC, AUPRC):\n")
         f.write(f"----------------------------------------------------------------------\n")
         if 'per_class_stats' in metrics:
-            f.write(f"{'Class':<8} | {'TP':<6} | {'TN':<6} | {'FP':<6} | {'FN':<6}\n")
-            f.write("-" * 42 + "\n")
+            f.write(f"{'Class':<8} | {'TP':<5} | {'TN':<5} | {'FP':<5} | {'FN':<5} | {'Sens':<7} | {'Spec':<7} | {'AUC':<7} | {'AUPRC':<7}\n")
+            f.write("-" * 75 + "\n")
             for c_name, c_s in metrics['per_class_stats'].items():
-                f.write(f"{c_name:<8} | {c_s['tp']:<6} | {c_s['tn']:<6} | {c_s['fp']:<6} | {c_s['fn']:<6}\n")
+                f.write(f"{c_name:<8} | {c_s['tp']:<5} | {c_s['tn']:<5} | {c_s['fp']:<5} | {c_s['fn']:<5} | {c_s.get('sensitivity', 0.0):<7.4f} | {c_s.get('specificity', 0.0):<7.4f} | {c_s.get('auc', 0.0):<7.4f} | {c_s.get('auprc', 0.0):<7.4f}\n")
             f.write("\n")
         f.write(f"CONFUSION MATRIX (Classes: {DIAGNOSTIC_NAMES}):\n")
         f.write(f"----------------------------------------------------------------------\n")
@@ -939,9 +943,21 @@ def main():
             'accuracy': metrics['accuracy'],
             'accuracy_pct': metrics['accuracy_pct'],
             'precision_macro': metrics['precision_macro'],
-            'recall_macro': metrics['recall_macro'],
+            'precision_weighted': metrics.get('precision_weighted', metrics['precision_macro']),
+            'sensitivity_macro': metrics.get('sensitivity_macro', metrics['recall_macro']),
+            'sensitivity_weighted': metrics.get('sensitivity_weighted', metrics['recall_weighted']),
+            'specificity_macro': metrics.get('specificity_macro', 0.0),
+            'specificity_weighted': metrics.get('specificity_weighted', 0.0),
             'f1_macro': metrics['f1_macro'],
+            'f1_weighted': metrics.get('f1_weighted', metrics['f1_macro']),
+            'auc_macro': metrics.get('auc_macro', metrics['roc_auc_macro']),
+            'auc_weighted': metrics.get('auc_weighted', metrics['roc_auc_weighted']),
             'roc_auc_macro': metrics['roc_auc_macro'],
+            'roc_auc_weighted': metrics.get('roc_auc_weighted', metrics['roc_auc_macro']),
+            'auprc_macro': metrics.get('auprc_macro', 0.0),
+            'auprc_weighted': metrics.get('auprc_weighted', 0.0),
+            'recall_macro': metrics['recall_macro'],
+            'recall_weighted': metrics.get('recall_weighted', metrics['recall_macro']),
             'avg_weights': str(avg_weights) if avg_weights is not None else "",
             'conf matrix': f"TP={metrics.get('tp', 0)}, TN={metrics.get('tn', 0)}, FP={metrics.get('fp', 0)}, FN={metrics.get('fn', 0)} | Matrix={metrics.get('confusion_matrix', [])}",
             'size': f"Total={len(df)} (Train={len(idx_train)}, Val={len(idx_val)}, Test={len(idx_test)})",

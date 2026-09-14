@@ -7,14 +7,18 @@ Dataset: PAD-UFES-20 (Total N = 2298 | Train N = 1953 | Val N = 229 | Test Split
 OVERALL PERFORMANCE PARAMETERS:
 ----------------------------------------------------------------------
 Accuracy                  :  84.10%
-Precision (Macro)         : 0.8166
-Precision (Weighted)      : 0.8786
-Recall (Macro)            : 0.8796
-Recall (Weighted)         : 0.8410
-F1-Score (Macro)          : 0.8357
-F1-Score (Weighted)       : 0.8495
-ROC-AUC (Macro OvR)       : 0.9936
-ROC-AUC (Weighted OvR)    : 0.9931
+Sensitivity / Recall (M)  : 0.8716
+Sensitivity / Recall (W)  : 0.8410
+Specificity (Macro TNR)   : 0.9678
+Specificity (Weighted TNR): 0.9661
+ROC-AUC / AUC (Macro OvR) : 0.9915
+ROC-AUC / AUC (Weighted)  : 0.9902
+AUPRC (Macro PR-AUC)      : 0.9668
+AUPRC (Weighted PR-AUC)   : 0.9706
+Precision (Macro)         : 0.8453
+Precision (Weighted)      : 0.8727
+F1-Score (Macro)          : 0.8501
+F1-Score (Weighted)       : 0.8499
 True Positives (TP)       : 386
 True Negatives (TN)       : 2222
 False Positives (FP)      : 73
@@ -25,34 +29,34 @@ PER-CLASS CLASSIFICATION BREAKDOWN:
 ----------------------------------------------------------------------
               precision    recall  f1-score   support
 
-         BCC     0.9744    0.8994    0.9354       169
-         ACK     0.9386    0.7329    0.8231       146
-         NEV     0.8367    0.8367    0.8367        49
-         SEK     0.4810    0.8085    0.6032        47
-         SCC     0.7600    1.0000    0.8636        38
-         MEL     0.9091    1.0000    0.9524        10
+         BCC     0.9691    0.9290    0.9486       169
+         ACK     0.8824    0.7192    0.7925       146
+         NEV     0.8723    0.8367    0.8542        49
+         SEK     0.4430    0.7447    0.5556        47
+         SCC     0.9048    1.0000    0.9500        38
+         MEL     1.0000    1.0000    1.0000        10
 
     accuracy                         0.8410       459
-   macro avg     0.8166    0.8796    0.8357       459
-weighted avg     0.8786    0.8410    0.8495       459
+   macro avg     0.8453    0.8716    0.8501       459
+weighted avg     0.8727    0.8410    0.8499       459
 
 
-PER-CLASS CONFUSION MATRIX PARAMETERS (TP, TN, FP, FN):
+PER-CLASS CONFUSION MATRIX PARAMETERS (TP, TN, FP, FN, Sens, Spec, AUC, AUPRC):
 ----------------------------------------------------------------------
-Class    | TP     | TN     | FP     | FN    
-------------------------------------------
-BCC      | 152    | 286    | 4      | 17    
-ACK      | 107    | 306    | 7      | 39    
-NEV      | 41     | 402    | 8      | 8     
-SEK      | 38     | 371    | 41     | 9     
-SCC      | 38     | 409    | 12     | 0     
-MEL      | 10     | 448    | 1      | 0     
+Class    | TP    | TN    | FP    | FN    | Sens    | Spec    | AUC     | AUPRC  
+---------------------------------------------------------------------------
+BCC      | 157   | 285   | 5     | 12    | 0.9290  | 0.9828  | 0.9973  | 0.9947 
+ACK      | 105   | 299   | 14    | 41    | 0.7192  | 0.9553  | 0.9824  | 0.9654 
+NEV      | 41    | 404   | 6     | 8     | 0.8367  | 0.9854  | 0.9974  | 0.9797 
+SEK      | 35    | 368   | 44    | 12    | 0.7447  | 0.8932  | 0.9718  | 0.8612 
+SCC      | 38    | 417   | 4     | 0     | 1.0000  | 0.9905  | 1.0000  | 1.0000 
+MEL      | 10    | 449   | 0     | 0     | 1.0000  | 1.0000  | 1.0000  | 1.0000 
 
 CONFUSION MATRIX (Classes: ['BCC', 'ACK', 'NEV', 'SEK', 'SCC', 'MEL']):
 ----------------------------------------------------------------------
-[[152,   4,   0,   0,  12,   1],
- [  4, 107,   2,  33,   0,   0],
+[[157,   8,   0,   0,   4,   0],
+ [  5, 105,   0,  36,   0,   0],
  [  0,   0,  41,   8,   0,   0],
- [  0,   3,   6,  38,   0,   0],
+ [  0,   6,   6,  35,   0,   0],
  [  0,   0,   0,   0,  38,   0],
  [  0,   0,   0,   0,   0,  10]]
